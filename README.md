@@ -23,7 +23,7 @@ A powerful Express.js + Prisma + SQLite + Groq AI Assistant API for CSV data upl
 | Logs all API activity (e.g., each request made) to a file or database table           | All API requests are logged to `api.log` and the `Log` table in the database using Winston and Prisma.            |
 | (Optional) Integrate a basic AI assistant to answer questions about the uploaded data | Integrated Groq AI (Llama3-70B) assistant via `/api/ask-ai` for natural language queries about the uploaded data. |
 | (Optional) Use Swagger/OpenAPI to document and test your API                          | Not implemented; API documentation and usage examples are provided in the README and sample requests.             |
-| (Optional) Implement basic input authentication                                       | Not implemented; endpoints are open for demonstration purposes.                                                   |
+| (Optional) Implement basic input authentication                                       | ✅ **Implemented** - Simple token-based authentication with demo tokens for secure endpoint access.               |
 
 ## 🛠 Tech Stack
 
@@ -78,6 +78,54 @@ npm run dev
 ```
 
 Visit: http://localhost:3000
+
+## 🔐 Authentication
+
+This application uses simple token-based authentication for secure operations.
+
+### Demo Tokens
+
+- `demo-token-123` - Demo access
+- `admin-token-456` - Admin access
+- `user-token-789` - User access
+
+### Protected vs Public Endpoints
+
+**Public Endpoints (No authentication required):**
+
+- `GET /api/health` - Health check
+- `GET /api/auth/info` - Get authentication information
+
+**Optional Authentication:**
+
+- `GET /api/data/stats` - Basic stats for all, detailed stats for authenticated users
+
+**Protected Endpoints (Authentication required):**
+
+- `POST /api/upload` - Upload CSV file
+- `GET /api/data` - Get all records
+- `GET /api/data/:id` - Get record by ID
+- `POST /api/ask-ai` - Ask AI questions
+- `GET /api/ai/history` - Get AI history
+
+### How to Authenticate
+
+**Option 1: Authorization Header**
+
+```bash
+curl -H "Authorization: Bearer demo-token-123" http://localhost:3000/api/data
+```
+
+**Option 2: Query Parameter (for testing)**
+
+```bash
+curl "http://localhost:3000/api/data?token=demo-token-123"
+```
+
+**Option 3: Web Interface**
+
+- Enter token in the authentication section on the homepage
+- Token is saved in localStorage for subsequent requests
 
 ## 🔗 API Endpoints
 

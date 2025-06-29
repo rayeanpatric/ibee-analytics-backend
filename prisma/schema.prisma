@@ -15,6 +15,7 @@ model Record {
   name      String
   age       Int?
   email     String?
+  userId    String   @default("unknown") // Add userId field with default for existing data
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -28,6 +29,7 @@ model Log {
   timestamp DateTime @default(now())
   userAgent String?
   ipAddress String?
+  userId    String?  // Add userId field for log segregation
 
   @@map("logs")
 }

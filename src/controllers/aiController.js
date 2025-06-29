@@ -34,13 +34,22 @@ const askAI = async (req, res) => {
       });
     }
 
-    logger.info(`AI query received: ${question.substring(0, 100)}...`);
+    logger.info(
+      `AI query received from user ${req.user?.userId}: ${question.substring(
+        0,
+        100
+      )}...`
+    );
 
-    // Get data summary for context
+    // Get user-specific data summary for context
+    const userId = req.user?.userId || "unknown";
     const [totalRecords, recentRecords, avgAge] = await Promise.all([
-      prisma.record.count(),
+      prisma.record.count({
+        where: { userId },
+      }),
       prisma.record.count({
         where: {
+          userId,
           createdAt: {
             gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
           },
@@ -51,6 +60,7 @@ const askAI = async (req, res) => {
           age: true,
         },
         where: {
+          userId,
           age: {
             not: null,
           },
@@ -58,8 +68,9 @@ const askAI = async (req, res) => {
       }),
     ]);
 
-    // Get a sample of recent records for more context
+    // Get a sample of recent records for more context (user-specific)
     const sampleRecords = await prisma.record.findMany({
+      where: { userId },
       take: 5,
       orderBy: {
         createdAt: "desc",
@@ -72,16 +83,16 @@ const askAI = async (req, res) => {
     });
 
     // Prepare context for AI
-    const contextMessage = `You are an AI assistant analyzing uploaded CSV data. Here's the current data summary:
+    const contextMessage = `You are an AI assistant analyzing this user's uploaded CSV data. Here's their personal data summary:
     
-Data Overview:
-- Total records: ${totalRecords}
-- Records uploaded in last 24 hours: ${recentRecords}
-- Average age: ${
+Your Data Overview:
+- Your total records: ${totalRecords}
+- Records you uploaded in last 24 hours: ${recentRecords}
+- Average age in your data: ${
       avgAge._avg.age ? Math.round(avgAge._avg.age * 100) / 100 : "N/A"
     }
 
-Sample Records:
+Sample of Your Recent Records:
 ${sampleRecords
   .map(
     (record) =>
@@ -91,7 +102,7 @@ ${sampleRecords
   )
   .join("\n")}
 
-Please answer questions about this data. If the question is not related to the data, politely redirect to data-related topics.`;
+Please answer questions about this user's personal data only. The analysis should be focused on their uploaded data, not global data. If the question is not related to their data, politely redirect to their data-related topics.`;
 
     // Call Groq API
     const completion = await groq.chat.completions.create({

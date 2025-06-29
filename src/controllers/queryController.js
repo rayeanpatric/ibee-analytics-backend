@@ -4,14 +4,16 @@ const { logger } = require("../middleware/logger");
 const prisma = new PrismaClient();
 
 /**
- * Get all records with optional filtering
+ * Get all records with optional filtering (user-specific)
  */
 const getAllRecords = async (req, res) => {
   try {
     const { page = 1, limit = 10, name, minAge, maxAge, email } = req.query;
 
-    // Build filter conditions
-    const where = {};
+    // Build filter conditions with user restriction
+    const where = {
+      userId: req.user?.userId || "unknown", // Only show user's own data
+    };
 
     if (name) {
       where.name = {
@@ -79,22 +81,23 @@ const getAllRecords = async (req, res) => {
 };
 
 /**
- * Get a single record by ID
+ * Get a single record by ID (user-specific)
  */
 const getRecordById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const record = await prisma.record.findUnique({
+    const record = await prisma.record.findFirst({
       where: {
         id: parseInt(id),
+        userId: req.user?.userId || "unknown", // Only allow access to user's own data
       },
     });
 
     if (!record) {
       return res.status(404).json({
         success: false,
-        error: "Record not found",
+        error: "Record not found or access denied",
       });
     }
 
@@ -116,30 +119,68 @@ const getRecordById = async (req, res) => {
 
 /**
  * Get database statistics
+ * User-specific stats for authenticated users
  */
 const getStats = async (req, res) => {
   try {
-    const [totalRecords, totalLogs, recentRecords] = await Promise.all([
-      prisma.record.count(),
-      prisma.log.count(),
-      prisma.record.count({
-        where: {
-          createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
-          },
-        },
-      }),
-    ]);
+    const userId = req.user?.userId || "unknown";
 
-    res.json({
-      success: true,
-      data: {
-        totalRecords,
-        totalLogs,
-        recentRecords,
-        lastUpdated: new Date().toISOString(),
-      },
-    });
+    // User-specific stats for authenticated users
+    if (req.isAuthenticated || req.user) {
+      const [userRecords, userRecentRecords, userLogs, userAvgAge] =
+        await Promise.all([
+          prisma.record.count({
+            where: { userId },
+          }),
+          prisma.record.count({
+            where: {
+              userId,
+              createdAt: {
+                gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+              },
+            },
+          }),
+          prisma.log.count({
+            where: { userId },
+          }),
+          prisma.record.aggregate({
+            _avg: { age: true },
+            where: {
+              userId,
+              age: { not: null },
+            },
+          }),
+        ]);
+
+      logger.info(`User-specific stats access by user: ${userId}`);
+
+      res.json({
+        success: true,
+        data: {
+          totalRecords: userRecords,
+          recentRecords: userRecentRecords,
+          totalLogs: userLogs,
+          averageAge: userAvgAge._avg.age
+            ? Math.round(userAvgAge._avg.age * 100) / 100
+            : null,
+          userId: userId,
+          lastUpdated: new Date().toISOString(),
+          message: "Your personal data statistics",
+        },
+      });
+    } else {
+      logger.info(`Unauthenticated stats access - showing placeholder data`);
+
+      res.json({
+        success: true,
+        data: {
+          totalRecords: 0,
+          recentRecords: 0,
+          totalLogs: 0,
+          message: "Authenticate to view your personal statistics",
+        },
+      });
+    }
   } catch (error) {
     logger.error(`Error fetching stats: ${error.message}`);
     res.status(500).json({

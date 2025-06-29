@@ -4,7 +4,6 @@ const path = require("path");
 
 const prisma = new PrismaClient();
 
-// Configure Winston logger
 const logger = winston.createLogger({
   level: "info",
   format: winston.format.combine(
@@ -26,40 +25,41 @@ const logger = winston.createLogger({
   ],
 });
 
-/**
- * Request logging middleware
- * Logs each request to file and optionally to database
- */
 const requestLogger = async (req, res, next) => {
   const startTime = Date.now();
 
-  // Log basic request info
-  const logMessage = `${req.method} ${req.url} - ${req.ip} - ${
-    req.get("User-Agent") || "Unknown"
-  }`;
-  logger.info(logMessage);
-
-  // Store log in database (optional - can be disabled for performance)
-  try {
-    await prisma.log.create({
-      data: {
-        method: req.method,
-        url: req.url,
-        userAgent: req.get("User-Agent") || null,
-        ipAddress: req.ip || req.connection.remoteAddress || null,
-      },
-    });
-  } catch (error) {
-    logger.error(`Failed to save log to database: ${error.message}`);
-  }
-
-  // Log response time after request completes
-  res.on("finish", () => {
-    const duration = Date.now() - startTime;
-    logger.info(`${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
-  });
-
   next();
+
+  process.nextTick(async () => {
+    const userId = req.user?.userId || null;
+    const logMessage = `${req.method} ${req.url} - ${req.ip} - ${
+      req.get("User-Agent") || "Unknown"
+    } - User: ${userId || "anonymous"}`;
+    logger.info(logMessage);
+
+    try {
+      await prisma.log.create({
+        data: {
+          method: req.method,
+          url: req.url,
+          userAgent: req.get("User-Agent") || null,
+          ipAddress: req.ip || req.connection.remoteAddress || null,
+          userId: userId,
+        },
+      });
+    } catch (error) {
+      logger.error(`Failed to save log to database: ${error.message}`);
+    }
+
+    res.on("finish", () => {
+      const duration = Date.now() - startTime;
+      logger.info(
+        `${req.method} ${req.url} - ${res.statusCode} - ${duration}ms - User: ${
+          userId || "anonymous"
+        }`
+      );
+    });
+  });
 };
 
 module.exports = {

@@ -8,7 +8,6 @@ const { logger } = require("../middleware/logger");
 
 const prisma = new PrismaClient();
 
-// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadsDir = path.join(__dirname, "../../uploads");
@@ -33,13 +32,10 @@ const upload = multer({
     }
   },
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 5 * 1024 * 1024,
   },
 });
 
-/**
- * Handle CSV file upload and processing
- */
 const uploadCSV = async (req, res) => {
   try {
     if (!req.file) {
@@ -54,7 +50,6 @@ const uploadCSV = async (req, res) => {
     const results = [];
     const filePath = req.file.path;
 
-    // Parse CSV file
     const stream = fs
       .createReadStream(filePath)
       .pipe(csv())
@@ -65,21 +60,32 @@ const uploadCSV = async (req, res) => {
           const validation = validateRows(results);
 
           logger.info(
-            `CSV validation complete: ${validation.summary.valid} valid, ${validation.summary.invalid} invalid out of ${validation.summary.total} rows`
+            `CSV validation: ${validation.summary.valid} valid, ${validation.summary.invalid} invalid out of ${validation.summary.total} rows`
           );
-          // Insert valid records into database
+
           let insertedCount = 0;
           if (validation.validRows.length > 0) {
+            const recordsWithUserId = validation.validRows.map((record) => ({
+              ...record,
+              userId: req.user?.userId || "unknown",
+            }));
+
             const createResult = await prisma.record.createMany({
-              data: validation.validRows,
+              data: recordsWithUserId,
             });
             insertedCount = createResult.count;
+
+            logger.info(
+              `Inserted ${insertedCount} records for user ${
+                req.user?.userId || "unknown"
+              }`
+            );
           }
 
-          // Clean up uploaded file
-          fs.unlinkSync(filePath);
+          fs.unlink(filePath, (err) => {
+            if (err) logger.error(`Error deleting file: ${err.message}`);
+          });
 
-          // Send response
           res.json({
             success: true,
             summary: {
@@ -94,9 +100,10 @@ const uploadCSV = async (req, res) => {
         } catch (error) {
           logger.error(`Error processing CSV: ${error.message}`);
 
-          // Clean up uploaded file on error
           if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
+            fs.unlink(filePath, (err) => {
+              if (err) logger.error(`Error deleting file: ${err.message}`);
+            });
           }
 
           res.status(500).json({
@@ -109,7 +116,6 @@ const uploadCSV = async (req, res) => {
       .on("error", (error) => {
         logger.error(`Error reading CSV file: ${error.message}`);
 
-        // Clean up uploaded file on error
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
