@@ -1,8 +1,8 @@
-# 🐝 iBee Analytics Backend
+# iBee Analytics Backend
 
 A powerful Express.js + Prisma + SQLite + Groq AI Assistant API for CSV data upload, querying, and AI-powered insights.
 
-## 🚀 Features
+## Features
 
 - **CSV Upload & Processing**: Upload CSV files with automatic validation and data insertion
 - **RESTful API**: Complete CRUD operations for data management
@@ -12,7 +12,7 @@ A powerful Express.js + Prisma + SQLite + Groq AI Assistant API for CSV data upl
 - **Data Validation**: Robust CSV validation with error reporting
 - **Real-time Stats**: Live data statistics and monitoring
 
-## 📋 How This Meets the Assignment Requirements
+## How This Meets the Assignment Requirements
 
 | Assignment Requirement                                                                | Implementation in This Project                                                                                    |
 | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -23,9 +23,9 @@ A powerful Express.js + Prisma + SQLite + Groq AI Assistant API for CSV data upl
 | Logs all API activity (e.g., each request made) to a file or database table           | All API requests are logged to `api.log` and the `Log` table in the database using Winston and Prisma.            |
 | (Optional) Integrate a basic AI assistant to answer questions about the uploaded data | Integrated Groq AI (Llama3-70B) assistant via `/api/ask-ai` for natural language queries about the uploaded data. |
 | (Optional) Use Swagger/OpenAPI to document and test your API                          | Not implemented; API documentation and usage examples are provided in the README and sample requests.             |
-| (Optional) Implement basic input authentication                                       | ✅ **Implemented** - Simple token-based authentication with demo tokens for secure endpoint access.               |
+| (Optional) Implement basic input authentication                                       | Implemented - Simple token-based authentication with demo tokens for secure endpoint access.                      |
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Backend**: Express.js, Node.js
 - **Database**: SQLite with Prisma ORM
@@ -34,12 +34,12 @@ A powerful Express.js + Prisma + SQLite + Groq AI Assistant API for CSV data upl
 - **Logging**: Winston
 - **Frontend**: Vanilla HTML/CSS/JavaScript
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Node.js 16+ and npm
 - Groq API key (get from [Groq Console](https://console.groq.com/))
 
-## ⚡ Quick Start
+## Quick Start
 
 ### 1. Clone and Install
 
@@ -79,7 +79,7 @@ npm run dev
 
 Visit: http://localhost:3000
 
-## 🔐 Authentication
+## Authentication
 
 This application uses simple token-based authentication for secure operations.
 
@@ -127,7 +127,7 @@ curl "http://localhost:3000/api/data?token=demo-token-123"
 - Enter token in the authentication section on the homepage
 - Token is saved in localStorage for subsequent requests
 
-## 🔗 API Endpoints
+## API Endpoints
 
 ### Data Operations
 
@@ -151,7 +151,7 @@ curl "http://localhost:3000/api/data?token=demo-token-123"
 - `maxAge` - Maximum age filter
 - `email` - Filter by email (partial match)
 
-## 📄 CSV Format
+## CSV Format
 
 Expected CSV columns:
 
@@ -168,7 +168,7 @@ Jane Smith,25,jane@example.com
 Bob Johnson,45,bob@example.com
 ```
 
-## 🤖 AI Assistant Examples
+## AI Assistant Examples
 
 Ask questions like:
 
@@ -177,7 +177,7 @@ Ask questions like:
 - "Tell me about the data distribution"
 - "What insights can you provide about the uploaded data?"
 
-## 📡 API Examples
+## API Examples
 
 ### Upload CSV
 
@@ -200,7 +200,33 @@ curl -X POST http://localhost:3000/api/ask-ai \
   -d '{"question": "What is the average age?"}'
 ```
 
-## 📊 Response Examples
+## Postman API Testing
+
+The following Postman screenshots demonstrate successful testing of all major API endpoints:
+
+### Upload CSV File
+
+![Upload API Test](./images/api_upload.png)
+_Testing the POST /api/upload endpoint with CSV file upload_
+
+### Get All Data Records
+
+![Data API Test](./images/api_data.png)
+_Testing the GET /api/data endpoint with pagination and filtering_
+
+### Get Record by ID
+
+![Data by ID API Test](./images/api_data_id.png)
+_Testing the GET /api/data/:id endpoint to retrieve a specific record_
+
+### AI Assistant Query
+
+![AI Assistant API Test](./images/api_ask-ai.png)
+_Testing the POST /api/ask-ai endpoint for AI-powered data insights_
+
+All endpoints are fully functional and properly return JSON responses with appropriate status codes and data structures.
+
+## Response Examples
 
 ### Successful Upload
 
@@ -262,7 +288,7 @@ curl -X POST http://localhost:3000/api/ask-ai \
 }
 ```
 
-## 🧪 Testing
+## Testing
 
 Use the included frontend or test with tools like:
 
@@ -270,7 +296,7 @@ Use the included frontend or test with tools like:
 - **curl**: See examples above
 - **Frontend**: http://localhost:3000
 
-## 📝 Scripts
+## Scripts
 
 ```bash
 npm run dev          # Start development server with nodemon
@@ -279,7 +305,7 @@ npm run db:migrate   # Run Prisma migrations
 npm run db:studio    # Open Prisma Studio
 ```
 
-## 🗂 Project Structure
+## Project Structure
 
 ```
 ibee-analytics-backend/
@@ -307,7 +333,7 @@ ibee-analytics-backend/
 └── README.md
 ```
 
-## 🔒 Security Notes
+## Security Notes
 
 - File upload size limited to 5MB
 - CSV validation prevents malicious data
@@ -315,7 +341,7 @@ ibee-analytics-backend/
 - Request logging for monitoring
 - CORS enabled for development
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -338,14 +364,14 @@ ibee-analytics-backend/
 4. **Port Already in Use**
    - Change `PORT` in `.env` or stop conflicting process
 
-## 📈 Performance Tips
+## Performance Tips
 
 - Use pagination for large datasets
 - Monitor log file size in production
 - Consider database indexing for large datasets
 - Rate limit AI requests if needed
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/amazing-feature`)
@@ -353,11 +379,11 @@ ibee-analytics-backend/
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
 
-## 📄 License
+## License
 
-This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙋‍♂️ Support
+## Support
 
 For questions or issues:
 
@@ -368,4 +394,6 @@ For questions or issues:
 
 ---
 
-Built with ❤️ using Express.js, Prisma, SQLite, and Groq AI
+<div align="center">
+Made with ❤️ by Rayean Patric
+</div>
