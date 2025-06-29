@@ -44,7 +44,7 @@ A powerful Express.js + Prisma + SQLite + Groq AI Assistant API for CSV data upl
 ### 1. Clone and Install
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/rayeanpatric/ibee-analytics-backend.git
 cd ibee-analytics-backend
 npm install
 ```
@@ -52,18 +52,20 @@ npm install
 ### 2. Configure Environment
 
 ```bash
-# Copy .env and update with your Groq API key
+# Copy the example environment file and update with your Groq API key
 cp .env.example .env
 ```
 
-Update `.env`:
+Update `.env` with your actual Groq API key:
 
 ```env
 DATABASE_URL="file:./dev.db"
-GROQ_API_KEY="your-groq-api-key-here"
+GROQ_API_KEY="your-actual-groq-api-key-here"
 PORT=3000
 NODE_ENV=development
 ```
+
+> **Important**: Get your free Groq API key from [Groq Console](https://console.groq.com/)
 
 ### 3. Initialize Database
 
