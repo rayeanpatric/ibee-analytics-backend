@@ -1,0 +1,30 @@
+{
+  "name": "ibee-analytics-backend",
+  "version": "1.0.0",
+  "description": "Express.js + Prisma + SQLite + Groq AI Assistant - CSV upload & query API with logging and AI assistant",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "db:migrate": "npx prisma migrate dev",
+    "db:studio": "npx prisma studio",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@prisma/client": "^6.10.1",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.0.0",
+    "express": "^4.18.2",
+    "groq-sdk": "^0.26.0",
+    "multer": "^2.0.1",
+    "prisma": "^6.10.1",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

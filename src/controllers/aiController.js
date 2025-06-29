@@ -1,0 +1,175 @@
+const Groq = require("groq-sdk");
+const { PrismaClient } = require("@prisma/client");
+const { logger } = require("../middleware/logger");
+
+const prisma = new PrismaClient();
+
+// Initialize Groq client
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
+/**
+ * Handle AI assistant queries
+ */
+const askAI = async (req, res) => {
+  try {
+    const { question } = req.body;
+
+    if (!question || question.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        error: "Question is required",
+      });
+    }
+
+    if (
+      !process.env.GROQ_API_KEY ||
+      process.env.GROQ_API_KEY === "sk-your-groq-api-key-here"
+    ) {
+      return res.status(500).json({
+        success: false,
+        error:
+          "Groq API key not configured. Please set GROQ_API_KEY in your .env file",
+      });
+    }
+
+    logger.info(`AI query received: ${question.substring(0, 100)}...`);
+
+    // Get data summary for context
+    const [totalRecords, recentRecords, avgAge] = await Promise.all([
+      prisma.record.count(),
+      prisma.record.count({
+        where: {
+          createdAt: {
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+          },
+        },
+      }),
+      prisma.record.aggregate({
+        _avg: {
+          age: true,
+        },
+        where: {
+          age: {
+            not: null,
+          },
+        },
+      }),
+    ]);
+
+    // Get a sample of recent records for more context
+    const sampleRecords = await prisma.record.findMany({
+      take: 5,
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        name: true,
+        age: true,
+        email: true,
+      },
+    });
+
+    // Prepare context for AI
+    const contextMessage = `You are an AI assistant analyzing uploaded CSV data. Here's the current data summary:
+    
+Data Overview:
+- Total records: ${totalRecords}
+- Records uploaded in last 24 hours: ${recentRecords}
+- Average age: ${
+      avgAge._avg.age ? Math.round(avgAge._avg.age * 100) / 100 : "N/A"
+    }
+
+Sample Records:
+${sampleRecords
+  .map(
+    (record) =>
+      `- ${record.name}, Age: ${record.age || "N/A"}, Email: ${
+        record.email || "N/A"
+      }`
+  )
+  .join("\n")}
+
+Please answer questions about this data. If the question is not related to the data, politely redirect to data-related topics.`;
+
+    // Call Groq API
+    const completion = await groq.chat.completions.create({
+      model: "llama3-70b-8192",
+      messages: [
+        {
+          role: "system",
+          content: contextMessage,
+        },
+        {
+          role: "user",
+          content: question,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+
+    const answer = completion.choices[0].message.content;
+
+    logger.info(
+      `AI response generated for query: ${question.substring(0, 50)}...`
+    );
+
+    res.json({
+      success: true,
+      data: {
+        question,
+        answer,
+        context: {
+          totalRecords,
+          recentRecords,
+          averageAge: avgAge._avg.age
+            ? Math.round(avgAge._avg.age * 100) / 100
+            : null,
+        },
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    logger.error(`AI query error: ${error.message}`);
+
+    // Handle specific Groq API errors
+    if (error.status === 401) {
+      return res.status(500).json({
+        success: false,
+        error:
+          "Invalid Groq API key. Please check your GROQ_API_KEY in .env file",
+      });
+    }
+
+    if (error.status === 429) {
+      return res.status(429).json({
+        success: false,
+        error: "Rate limit exceeded. Please try again later",
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: "Failed to process AI query",
+      details: error.message,
+    });
+  }
+};
+
+/**
+ * Get AI conversation history (if we want to implement this later)
+ */
+const getAIHistory = async (req, res) => {
+  res.json({
+    success: true,
+    message: "AI conversation history feature not implemented yet",
+    data: [],
+  });
+};
+
+module.exports = {
+  askAI,
+  getAIHistory,
+};
