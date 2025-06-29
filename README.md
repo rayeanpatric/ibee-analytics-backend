@@ -226,6 +226,27 @@ _Testing the POST /api/ask-ai endpoint for AI-powered data insights_
 
 All endpoints are fully functional and properly return JSON responses with appropriate status codes and data structures.
 
+## Web Interface Demo
+
+The following screenshots demonstrate the complete web interface functionality:
+
+### Unauthenticated State
+
+![Not Authenticated](./images/not_authenticated.png)
+_Initial state showing login requirement and demo tokens available_
+
+### After Authentication and File Upload
+
+![After Login and Upload](./images/after_logging%20and_uploading_file.png)
+_Dashboard after successful login and CSV file upload showing upload results_
+
+### Data Overview and AI Assistant
+
+![Data Overview and AI](./images/data_overview_and_AI_overview.png)
+_Data statistics dashboard and AI chat interface with conversation_
+
+The web interface provides a complete user experience with authentication, file upload, data visualization, and AI-powered insights.
+
 ## Response Examples
 
 ### Successful Upload
