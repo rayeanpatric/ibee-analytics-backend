@@ -4,14 +4,10 @@ const { logger } = require("../middleware/logger");
 
 const prisma = new PrismaClient();
 
-// Initialize Groq client
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-/**
- * Handle AI assistant queries
- */
 const askAI = async (req, res) => {
   try {
     const { question } = req.body;
@@ -41,7 +37,6 @@ const askAI = async (req, res) => {
       )}...`
     );
 
-    // Get user-specific data summary for context
     const userId = req.user?.userId || "unknown";
     const [totalRecords, recentRecords, avgAge] = await Promise.all([
       prisma.record.count({
@@ -68,7 +63,6 @@ const askAI = async (req, res) => {
       }),
     ]);
 
-    // Get a sample of recent records for more context (user-specific)
     const sampleRecords = await prisma.record.findMany({
       where: { userId },
       take: 5,
@@ -82,7 +76,6 @@ const askAI = async (req, res) => {
       },
     });
 
-    // Prepare context for AI
     const contextMessage = `You are an AI assistant analyzing this user's uploaded CSV data. Here's their personal data summary:
     
 Your Data Overview:
@@ -104,7 +97,6 @@ ${sampleRecords
 
 Please answer questions about this user's personal data only. The analysis should be focused on their uploaded data, not global data. If the question is not related to their data, politely redirect to their data-related topics.`;
 
-    // Call Groq API
     const completion = await groq.chat.completions.create({
       model: "llama3-70b-8192",
       messages: [
@@ -145,7 +137,6 @@ Please answer questions about this user's personal data only. The analysis shoul
   } catch (error) {
     logger.error(`AI query error: ${error.message}`);
 
-    // Handle specific Groq API errors
     if (error.status === 401) {
       return res.status(500).json({
         success: false,
@@ -169,9 +160,6 @@ Please answer questions about this user's personal data only. The analysis shoul
   }
 };
 
-/**
- * Get AI conversation history (if we want to implement this later)
- */
 const getAIHistory = async (req, res) => {
   res.json({
     success: true,
