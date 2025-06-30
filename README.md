@@ -209,6 +209,7 @@ The following Postman screenshots demonstrate successful testing of all major AP
 ### Upload CSV File
 
 ![Upload API Test](./images/api_upload.png)
+
 _Testing the POST /api/upload endpoint with CSV file upload_
 
 ### Get All Data Records
