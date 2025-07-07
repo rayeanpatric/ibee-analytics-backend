@@ -46,7 +46,7 @@ const askAI = async (req, res) => {
         where: {
           userId,
           createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), 
           },
         },
       }),
@@ -95,7 +95,15 @@ ${sampleRecords
   )
   .join("\n")}
 
-Please answer questions about this user's personal data only. The analysis should be focused on their uploaded data, not global data. If the question is not related to their data, politely redirect to their data-related topics.`;
+Please answer questions about this user's personal data only. The analysis should be focused on their uploaded data, not global data. If the question is not related to their data, politely redirect to their data-related topics.
+
+FORMATTING INSTRUCTIONS:
+- Use **bold text** for section headers and important terms
+- Use *italic text* for emphasis
+- Use bullet points with - for lists
+- Use numbered lists when showing steps
+- Use \`code\` for technical terms or data values
+- Structure your response with clear sections and proper spacing`;
 
     const completion = await groq.chat.completions.create({
       model: "llama3-70b-8192",
@@ -113,7 +121,26 @@ Please answer questions about this user's personal data only. The analysis shoul
       max_tokens: 1000,
     });
 
-    const answer = completion.choices[0].message.content;
+    const rawAnswer = completion.choices[0].message.content;
+
+    let answer = rawAnswer
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/(?<!<strong>.*)\*([^*]+?)\*(?!.*<\/strong>)/g, "<em>$1</em>")
+      .replace(/`([^`]+?)`/g, "<code>$1</code>")
+      .replace(/^- (.+)$/gm, "<li>$1</li>")
+      .replace(/^\d+\. (.+)$/gm, "<li>$1</li>");
+
+    answer = answer.replace(/(<li>.*<\/li>\s*)+/gs, (match) => {
+      return `<ul>${match}</ul>`;
+    });
+
+    answer = answer.replace(/\n\n/g, "</p><p>");
+
+    answer = answer.replace(/(?<!<\/li>)\n(?!<li>)/g, "<br>");
+
+    const formattedAnswer = answer.match(/^<(p|ul|ol|h[1-6]|div)/)
+      ? answer
+      : `<p>${answer}</p>`;
 
     logger.info(
       `AI response generated for query: ${question.substring(0, 50)}...`
@@ -123,7 +150,8 @@ Please answer questions about this user's personal data only. The analysis shoul
       success: true,
       data: {
         question,
-        answer,
+        answer: formattedAnswer,
+        rawAnswer, // Keep the original markdown version as well
         context: {
           totalRecords,
           recentRecords,
