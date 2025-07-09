@@ -151,7 +151,7 @@ FORMATTING INSTRUCTIONS:
       data: {
         question,
         answer: formattedAnswer,
-        rawAnswer, // Keep the original markdown version as well
+        rawAnswer, 
         context: {
           totalRecords,
           recentRecords,

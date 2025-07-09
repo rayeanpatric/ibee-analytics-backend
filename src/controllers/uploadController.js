@@ -56,7 +56,6 @@ const uploadCSV = async (req, res) => {
       .on("data", (data) => results.push(data))
       .on("end", async () => {
         try {
-          // Validate all rows
           const validation = validateRows(results);
 
           logger.info(

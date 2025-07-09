@@ -3,14 +3,10 @@ const { logger } = require("../middleware/logger");
 
 const prisma = new PrismaClient();
 
-/**
- * Get all records with optional filtering (user-specific)
- */
 const getAllRecords = async (req, res) => {
   try {
     const { page = 1, limit = 10, name, minAge, maxAge, email } = req.query;
 
-    // Build filter conditions with user restriction
     const where = {
       userId: req.user?.userId || "unknown", // Only show user's own data
     };
@@ -35,11 +31,9 @@ const getAllRecords = async (req, res) => {
       };
     }
 
-    // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const take = parseInt(limit);
 
-    // Get records and total count
     const [records, totalCount] = await Promise.all([
       prisma.record.findMany({
         where,
@@ -80,9 +74,6 @@ const getAllRecords = async (req, res) => {
   }
 };
 
-/**
- * Get a single record by ID (user-specific)
- */
 const getRecordById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -117,15 +108,10 @@ const getRecordById = async (req, res) => {
   }
 };
 
-/**
- * Get database statistics
- * User-specific stats for authenticated users
- */
 const getStats = async (req, res) => {
   try {
     const userId = req.user?.userId || "unknown";
 
-    // User-specific stats for authenticated users
     if (req.isAuthenticated || req.user) {
       const [userRecords, userRecentRecords, userLogs, userAvgAge] =
         await Promise.all([
